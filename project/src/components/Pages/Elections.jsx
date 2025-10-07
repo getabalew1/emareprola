@@ -13,11 +13,13 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "../../contexts/AuthContext";
+import { useNotifications } from "../../contexts/NotificationContext";
 import { apiService } from "../../services/api";
 import toast from "react-hot-toast";
 
 export function Elections() {
   const { user } = useAuth();
+  const { markAsSeen } = useNotifications();
   const [selectedTab, setSelectedTab] = useState("all");
   const [selectedElection, setSelectedElection] = useState(null);
   const [elections, setElections] = useState([]);
@@ -49,14 +51,15 @@ export function Elections() {
 
   useEffect(() => {
     fetchElections();
-  }, []);
+    markAsSeen('elections');
+  }, [user]);
 
   const fetchElections = async () => {
     try {
       setLoading(true);
       const response = await apiService.getElections();
       console.log('Elections API response:', response);
-      
+
       // Handle different response structures
       let electionsData = [];
       if (Array.isArray(response)) {
@@ -68,8 +71,24 @@ export function Elections() {
       } else if (response.success && response.elections) {
         electionsData = response.elections;
       }
-      
+
       setElections(electionsData);
+
+      // Check which elections the user has voted in
+      if (user && !user.isAdmin) {
+        const votedIds = new Set();
+        electionsData.forEach(election => {
+          if (election.voters && Array.isArray(election.voters)) {
+            const hasVoted = election.voters.some(voter =>
+              voter.user && (voter.user._id === user.id || voter.user === user.id)
+            );
+            if (hasVoted) {
+              votedIds.add(election._id || election.id);
+            }
+          }
+        });
+        setVotedElections(votedIds);
+      }
     } catch (error) {
       console.error("Failed to fetch elections:", error);
       toast.error("Failed to load elections");
@@ -779,15 +798,28 @@ export function Elections() {
 
                   {/* Actions */}
                   <div className="flex space-x-3">
-                    {election.status === "active" && (
+                    {election.status === "active" && !user?.isAdmin && (
                       <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                        whileHover={{ scale: votedElections.has(election._id || election.id) ? 1 : 1.02 }}
+                        whileTap={{ scale: votedElections.has(election._id || election.id) ? 1 : 0.98 }}
                         onClick={() => setSelectedElection(election)}
-                        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                          votedElections.has(election._id || election.id)
+                            ? "bg-green-100 text-green-700 cursor-default"
+                            : "bg-blue-600 text-white hover:bg-blue-700"
+                        }`}
                         disabled={votedElections.has(election._id || election.id)}>
-                        <Vote className="w-4 h-4 inline mr-2" />
-                        {votedElections.has(election._id || election.id) ? "Voted" : "Vote Now"}
+                        {votedElections.has(election._id || election.id) ? (
+                          <>
+                            <CheckCircle className="w-4 h-4 inline mr-2" />
+                            Already Voted
+                          </>
+                        ) : (
+                          <>
+                            <Vote className="w-4 h-4 inline mr-2" />
+                            Vote Now
+                          </>
+                        )}
                       </motion.button>
                     )}
 
@@ -931,24 +963,29 @@ export function Elections() {
                           </div>
                         </div>
                         
-                        {/* Only show vote button for students, not admins */}
-                        {selectedElection.status === "active" && 
-                         !votedElections.has(selectedElection._id || selectedElection.id) && 
+                        {/* Only show vote button for students who haven't voted yet */}
+                        {selectedElection.status === "active" &&
                          !user?.isAdmin && user && (
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() =>
-                              handleVote(selectedElection._id || selectedElection.id, candidate._id || candidate.id)
-                            }
-                            disabled={votingInProgress}
-                            className={`w-full mt-4 py-2 px-4 rounded-lg font-medium transition-colors ${
-                              votingInProgress 
-                                ? "bg-gray-400 text-gray-600 cursor-not-allowed" 
-                                : "bg-blue-600 text-white hover:bg-blue-700"
-                            }`}>
-                            {votingInProgress ? "Processing..." : `Vote for ${candidate.name}`}
-                          </motion.button>
+                          votedElections.has(selectedElection._id || selectedElection.id) ? (
+                            <div className="w-full mt-4 py-2 px-4 rounded-lg bg-gray-100 text-gray-600 text-center font-medium">
+                              You have already voted in this election
+                            </div>
+                          ) : (
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() =>
+                                handleVote(selectedElection._id || selectedElection.id, candidate._id || candidate.id)
+                              }
+                              disabled={votingInProgress}
+                              className={`w-full mt-4 py-2 px-4 rounded-lg font-medium transition-colors ${
+                                votingInProgress
+                                  ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                                  : "bg-blue-600 text-white hover:bg-blue-700"
+                              }`}>
+                              {votingInProgress ? "Processing..." : `Vote for ${candidate.name}`}
+                            </motion.button>
+                          )
                         )}
                       </div>
                     ))

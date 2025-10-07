@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
 import { Layout } from "./components/Layout/Layout";
 import { ProtectedRoute } from "./components/Auth/ProtectedRoute";
 import { AdminRoute } from "./components/Auth/AdminRoute";
@@ -147,7 +148,9 @@ function AppContent() {
 export function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <NotificationProvider>
+        <AppContent />
+      </NotificationProvider>
     </AuthProvider>
   );
 }

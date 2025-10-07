@@ -4,11 +4,14 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, X, User, LogOut } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import { useNotifications } from "../../contexts/NotificationContext";
+import { NotificationBadge } from "./NotificationBadge";
 import "../../app.css";
 
 export function Header() {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const { user, logout } = useAuth();
+	const { notifications } = useNotifications();
 	const navigate = useNavigate();
 
 	const handleLogout = () => {
@@ -27,11 +30,11 @@ export function Header() {
 	const protectedNavigation = [
 		...(user ? [
 			{ name: "Dashboard", href: "/dashboard" },
-			{ name: "Clubs", href: "/clubs" },
-			{ name: "Elections", href: "/elections" },
+			{ name: "Clubs", href: "/clubs", badge: notifications.clubs },
+			{ name: "Elections", href: "/elections", badge: notifications.elections },
 			{ name: "Services", href: "/services" },
-			{ name: "Latest", href: "/latest" },
-			{ name: "Complaints", href: "/complaints" },
+			{ name: "Latest", href: "/latest", badge: notifications.posts },
+			{ name: "Complaints", href: "/complaints", badge: notifications.complaints },
 		] : []),
 	];
 
@@ -101,8 +104,9 @@ export function Header() {
 								<Link
 									key={item.name}
 									to={item.href}
-									className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+									className="text-gray-700 hover:text-blue-600 font-medium transition-colors relative">
 									{item.name}
+									{item.badge > 0 && <NotificationBadge count={item.badge} />}
 								</Link>
 							))}
 					</nav>
@@ -175,9 +179,14 @@ export function Header() {
 								<Link
 									key={item.name}
 									to={item.href}
-									className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md"
+									className="block px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md relative"
 									onClick={() => setIsMenuOpen(false)}>
 									{item.name}
+									{item.badge > 0 && (
+										<span className="ml-2 bg-red-500 text-white text-xs font-bold rounded-full px-2 py-0.5">
+											{item.badge}
+										</span>
+									)}
 								</Link>
 							))}
 					</div>

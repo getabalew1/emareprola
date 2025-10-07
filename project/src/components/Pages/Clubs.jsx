@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Users, Calendar, Award, Search, Filter, Plus, MapPin, Mail, Phone, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "../../contexts/AuthContext";
+import { useNotifications } from "../../contexts/NotificationContext";
 import { apiService } from "../../services/api";
 import toast from "react-hot-toast";
 
 export function Clubs() {
   const { user } = useAuth();
+  const { markAsSeen } = useNotifications();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [clubs, setClubs] = useState([]);
@@ -52,6 +54,7 @@ export function Clubs() {
 
   useEffect(() => {
     fetchClubs();
+    markAsSeen('clubs');
   }, []);
 
   const fetchClubs = async () => {

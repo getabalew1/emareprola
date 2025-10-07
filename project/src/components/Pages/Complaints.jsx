@@ -14,6 +14,7 @@ import {
 	Upload,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import { useNotifications } from "../../contexts/NotificationContext";
 import { generateCaseId } from "../../data/mockData";
 import { apiService } from "../../services/api";
 import { motion } from "framer-motion";
@@ -21,6 +22,7 @@ import toast from "react-hot-toast";
 
 export function Complaints() {
 	const { user } = useAuth();
+	const { markAsSeen } = useNotifications();
 
 	const [selectedTab, setSelectedTab] = useState("all");
 	const [showNewComplaint, setShowNewComplaint] = useState(false);
@@ -52,6 +54,7 @@ export function Complaints() {
 
 	useEffect(() => {
 		fetchComplaints();
+		markAsSeen('complaints');
 	}, []);
 
 	const fetchComplaints = async () => {

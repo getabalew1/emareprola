@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 
 export function LoginForm() {
-  const [loginType, setLoginType] = useState("student"); // "student" or "admin"
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -56,11 +55,11 @@ export function LoginForm() {
         return;
       }
 
-      if (loginType === "admin") {
-        await adminLogin(formData.username, formData.password);
+      const result = await login(formData.username, formData.password);
+
+      if (result && result.isAdmin) {
         toast.success("Admin login successful");
       } else {
-        await login(formData.username, formData.password);
         toast.success("Login successful");
       }
     } catch (error) {
@@ -149,33 +148,6 @@ export function LoginForm() {
           </div>
         </div>
 
-        {/* Login Type Toggle */}
-        {!showRegister && (
-          <div className="flex bg-gray-100 rounded-lg p-1">
-            <button
-              type="button"
-              onClick={() => setLoginType("student")}
-              className={`flex-1 flex items-center justify-center py-2 px-4 rounded-md font-medium transition-colors ${
-                loginType === "student"
-                  ? "bg-white text-blue-600 shadow-sm"
-                  : "text-gray-600 hover:text-gray-800"
-              }`}>
-              <UserCheck className="w-4 h-4 mr-2" />
-              Student
-            </button>
-            <button
-              type="button"
-              onClick={() => setLoginType("admin")}
-              className={`flex-1 flex items-center justify-center py-2 px-4 rounded-md font-medium transition-colors ${
-                loginType === "admin"
-                  ? "bg-white text-blue-600 shadow-sm"
-                  : "text-gray-600 hover:text-gray-800"
-              }`}>
-              <Shield className="w-4 h-4 mr-2" />
-              Admin
-            </button>
-          </div>
-        )}
 
         {/* Form */}
         <motion.form
@@ -200,7 +172,7 @@ export function LoginForm() {
                 value={showRegister ? registerData.username : formData.username}
                 onChange={handleInputChange}
                 className="pl-10 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                placeholder={loginType === "admin" ? "admin username" : "dbu10304058"}
+                placeholder="dbu10304058"
               />
             </div>
             <p className="mt-1 text-xs text-gray-500">
@@ -368,38 +340,37 @@ export function LoginForm() {
                 Loading...
               </div>
             ) : (
-              showRegister ? "Register" : `Login as ${loginType === "admin" ? "Admin" : "Student"}`
+              showRegister ? "Register" : "Login"
             )}
           </motion.button>
 
           {/* Toggle between login and register */}
-          {loginType === "student" && (
-            <div className="text-center">
+          <div className="text-center">
             <button
               type="button"
               onClick={() => setShowRegister(!showRegister)}
               className="text-blue-600 hover:text-blue-700 font-medium">
               {showRegister ? "Already have an account? Login" : "Don't have an account? Register"}
             </button>
-            </div>
-          )}
+          </div>
 
           {/* Demo Credentials */}
           {!showRegister && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="text-sm">
                 <p className="font-medium text-blue-800 mb-2">Demo Credentials:</p>
-                {loginType === "admin" ? (
+                <div className="space-y-2">
                   <div className="text-blue-700">
-                    <span>Username: dbu10101030</span><br />
-                    <span>Password: Admin123#</span>
-                  </div>
-                ) : (
-                  <div className="text-blue-700">
+                    <p className="font-medium">Student:</p>
                     <span>Username: dbu10304058</span><br />
                     <span>Password: Student123#</span>
                   </div>
-                )}
+                  <div className="text-blue-700 pt-2 border-t border-blue-200">
+                    <p className="font-medium">Admin:</p>
+                    <span>Username: dbu10101030</span><br />
+                    <span>Password: Admin123#</span>
+                  </div>
+                </div>
               </div>
             </div>
           )}

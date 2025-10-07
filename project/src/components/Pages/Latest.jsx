@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../../contexts/AuthContext";
+import { useNotifications } from "../../contexts/NotificationContext";
 import { Trash2, Plus, Calendar, MapPin, Clock, Eye, Heart, MessageCircle } from "lucide-react";
 import { apiService } from "../../services/api";
 import toast from "react-hot-toast";
 
 export function Latest() {
   const { user } = useAuth();
+  const { markAsSeen } = useNotifications();
   const [activeTab, setActiveTab] = useState("News");
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +29,7 @@ export function Latest() {
 
   useEffect(() => {
     fetchPosts();
+    markAsSeen('posts');
   }, []);
 
   const fetchPosts = async () => {
